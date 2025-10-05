@@ -17,7 +17,7 @@ import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Kuma Mieru',
+    default: '飞小RAN | 状态监测',
     template: siteConfig.name ? `%s - ${siteConfig.name}` : '%s - Kuma Mieru',
   },
   description: siteConfig.description || 'Kuma Mieru',
