@@ -84,7 +84,7 @@ Built with Next.js 15, TypeScript, and Recharts, this project enhances Uptime Ku
 
 #### 2. Import to Vercel
 
-Go to https://vercel.com/new, select **Import** to import the repository you just forked.
+Go to <https://vercel.com/new>, select **Import** to import the repository you just forked.
 
 #### 3. Configure Environment Variables
 
@@ -164,6 +164,7 @@ Go to https://vercel.com/new, select **Import** to import the repository you jus
    Access at: [http://localhost:3883](http://localhost:3883)
 
 5. **Production Build**
+
    ```bash
    bun run build
    bun run start
@@ -250,7 +251,7 @@ Then, the environment variables you need to configure are as follows:
 
 | Variable Name            | Required | Description                             | Example                            |
 | ------------------------ | -------- | --------------------------------------- | ---------------------------------- |
-| UPTIME_KUMA_BASE_URL     | Yes      | Base URL of Uptime Kuma instance        | https://example.kuma-mieru.invalid |
+| UPTIME_KUMA_BASE_URL     | Yes      | Base URL of Uptime Kuma instance        | <https://example.kuma-mieru.invalid> |
 | PAGE_ID                  | Yes      | Status page path of Uptime Kuma         | test1                              |
 | FEATURE_EDIT_THIS_PAGE   | No       | Whether to show "Edit This Page" button | false                              |
 | FEATURE_SHOW_STAR_BUTTON | No       | Whether to show "Star on Github" button | true                               |

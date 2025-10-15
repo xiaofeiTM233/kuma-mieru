@@ -4,6 +4,8 @@ import * as cheerio from 'cheerio';
 import { z } from 'zod';
 import { extractPreloadData } from '../utils/json-processor';
 import { sanitizeJsonString } from '../utils/json-sanitizer';
+import { fetchPreloadDataFromApi, getPreloadPayload } from '../utils/preload-data';
+import type { PreloadData } from '../types/config';
 
 import 'dotenv/config';
 
@@ -77,14 +79,38 @@ async function fetchSiteMeta(baseUrl: string, pageId: string) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    const preloadScript = $('#preload-data').text();
+    const { payload, source } = getPreloadPayload($);
+    let preloadSource = payload;
+    let preloadData: PreloadData | null = null;
 
-    if (!preloadScript) {
-      throw new Error('Preload data script tag not found');
+    if (!preloadSource) {
+      const legacyScript = $('script:contains("window.preloadData")').text();
+      if (legacyScript) {
+        const match = legacyScript.match(/window\.preloadData\s*=\s*({[\s\S]*?});/);
+        if (match && match[1]) {
+          preloadSource = match[1];
+          console.log('Fallback to window.preloadData script for site meta extraction');
+        }
+      }
     }
 
-    const jsonStr = sanitizeJsonString(preloadScript);
-    const preloadData = extractPreloadData(jsonStr);
+    if (preloadSource) {
+      if (source === 'data-json') {
+        console.log('Using preload data from data-json attribute for site meta');
+      }
+
+      const jsonStr = sanitizeJsonString(preloadSource);
+      preloadData = extractPreloadData(jsonStr);
+    } else {
+      console.log('Preload data not found in HTML, attempting status page API fallback');
+      const apiFallback = await fetchPreloadDataFromApi({ baseUrl, pageId });
+      console.log(`Using status page API fallback from ${apiFallback.url}`);
+      preloadData = apiFallback.data;
+    }
+
+    if (!preloadData) {
+      throw new Error('Failed to resolve preload data from HTML or API');
+    }
 
     // 合并自定义值，自定义优先级 > API
     return siteMetaSchema.parse({

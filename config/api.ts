@@ -16,8 +16,8 @@ export const getConfig = (): Config => {
     apiEndpoint: `${baseUrl}/api/status-page/heartbeat/${pageId}`,
     siteMeta,
     isPlaceholder: false,
-    isEditThisPage: isEditThisPage || false,
-    isShowStarButton: isShowStarButton || true,
+    isEditThisPage: isEditThisPage ?? false,
+    isShowStarButton: isShowStarButton ?? true,
   };
 
   if (NODE_ENV === 'development') {

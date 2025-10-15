@@ -3,6 +3,7 @@ import type { GlobalConfig, Maintenance } from '@/types/config';
 import { ConfigError } from '@/utils/errors';
 import { extractPreloadData } from '@/utils/json-processor';
 import { sanitizeJsonString } from '@/utils/json-sanitizer';
+import { fetchPreloadDataFromApi, getPreloadPayload } from '@/utils/preload-data';
 import * as cheerio from 'cheerio';
 import { cache } from 'react';
 import { ApiDataError, logApiError } from './utils/api-service';
@@ -163,20 +164,42 @@ export async function getPreloadData() {
     // Uptime Kuma version > 1.18.4, use script#preload-data to get preload data
     // @see https://github.com/louislam/uptime-kuma/commit/6e07ed20816969bfd1c6c06eb518171938312782
     // & https://github.com/louislam/uptime-kuma/issues/2186#issuecomment-1270471470
-    let preloadScript = $('#preload-data').text();
+    const { payload: initialPayload, source } = getPreloadPayload($);
+    let preloadScript = initialPayload ?? '';
+
+    if (source === 'data-json') {
+      console.debug('Using preload data from data-json attribute');
+    }
 
     if (!preloadScript || preloadScript.trim() === '') {
       // Uptime Kuma version <= 1.18.4, use script:contains("window.preloadData") to get preload data
       const scriptWithPreloadData = $('script:contains("window.preloadData")').text();
-      
+
       if (scriptWithPreloadData) {
-        const match = scriptWithPreloadData.match(/window\.preloadData\s*=\s*({.*});/);
+        const match = scriptWithPreloadData.match(/window\.preloadData\s*=\s*({[\s\S]*?});/);
         if (match && match[1]) {
           preloadScript = match[1];
           console.log('Successfully extracted preload data from window.preloadData');
         } else {
           console.error('Failed to extract preload data with regex. Script content:', scriptWithPreloadData.slice(0, 200));
         }
+      }
+    }
+
+    if (!preloadScript || preloadScript.trim() === '') {
+      console.warn('Preload script missing, attempting status page API fallback');
+      try {
+        const apiFallback = await fetchPreloadDataFromApi({
+          baseUrl: apiConfig.baseUrl,
+          pageId: apiConfig.pageId,
+          fetchFn: (url, init) =>
+            customFetch(url, init as RequestInit & { maxRetries?: number; retryDelay?: number; timeout?: number }),
+          requestInit: customFetchOptions,
+        });
+        console.info('Using status page API fallback for preload data');
+        return apiFallback.data;
+      } catch (apiError) {
+        console.error('Status page API fallback failed:', apiError);
       }
     }
 

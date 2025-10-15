@@ -50,5 +50,7 @@ dist/
 *.lock
 !bun.lock
 
-@*.md
-p*.md
+*.md
+!CODE_OF_CONDUCT.md
+!CONTRIBUTING.md
+!README*
